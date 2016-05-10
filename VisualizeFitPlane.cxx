@@ -34,45 +34,33 @@
 #include <iostream>
 #include <string>
 
-
-int main ( int argc, char *argv[] )
+std::vector<std::vector<double> > ReadPointcloudFromPLYFile(std::string filename)
 {
-  // Parse command line arguments
-  if(argc != 4)
-    {
-    std::cerr << "Usage: " << argv[0]
-              << " Filename(.ply) Fitting_plane_filename(.txt) method" << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  std::string filename = argv[1];
-  std::string plane_filename = argv[2];
-  int method = atoi(argv[3]);
-
-  //----------------------------------------------------------------------//
-  // read the *.ply data 
-  // ---------------------------------------------------------------------//
   std::vector< std::vector<double> > mylandmarks;
-  std::string input_ply_file = filename;
-  std::cout << input_ply_file << std::endl;
-  std::ifstream ifs(input_ply_file.c_str(), std::ifstream::in);
+  std::ifstream ifs(filename.c_str(), std::ifstream::in);
   std::string line;
   if(ifs.is_open())
   {
       int lno = 0;
 	  int vno;
+	  int startlno = 1000000;
 	  while(ifs.good())
 	  {
 		  lno++;
 		  std::getline(ifs, line);
-		  if(lno == 4)
+		  if(line.find("element vertex") != std::string::npos)
 		  {
 			  std::string vnostr = line.substr(15);
 			  vno = stoi(vnostr);
 			  //std::cout << "Vertex # = " << vno << std::endl;
 		  }
+
+		  if(line == "end_header")
+		  {
+			  startlno = lno+1;
+		  }
 		  
-		  if(lno >= 10 && lno < vno+10)
+		  if(lno >= startlno && lno < vno+startlno)
 		  {
               //std::cout << lno << ": " << line << std::endl;
 			  std::stringstream ss(line);
@@ -97,6 +85,75 @@ int main ( int argc, char *argv[] )
 
   ifs.close();
 
+
+  return mylandmarks;
+
+}
+
+std::vector<std::vector<double> > ReadFitParamFile(std::string filename)
+{
+  std::vector< std::vector<double> > myparams;
+  std::ifstream ifs(filename.c_str(), std::ifstream::in);
+  std::string strline;
+  if(ifs.is_open())
+  {
+      int lno = 0;
+	  int vno;
+	  while(ifs.good())
+	  {
+		  lno++;
+		  std::getline(ifs, strline);
+		  
+		  if(lno == 2 || lno == 5 || lno == 8)
+		  {
+              //std::cout << lno << ": " << line << std::endl;
+			  std::stringstream ss(strline);
+			  std::string token;
+			  std::vector<std::string> valstrs;
+			  while(std::getline(ss, token, ' '))
+			  {
+				  valstrs.push_back(token);
+				  //std::cout << token << std::endl;
+			  }
+
+			  std::vector<double> params;
+			  for(int i=0; i<valstrs.size(); i++)
+			  {
+				  params.push_back(stod(valstrs[i]));
+			  }
+
+			  myparams.push_back(params);
+		  }
+	  }
+  }
+
+  ifs.close();
+
+  return myparams;
+
+}
+
+
+
+int main ( int argc, char *argv[] )
+{
+  // Parse command line arguments
+  if(argc != 4)
+    {
+    std::cerr << "Usage: " << argv[0]
+              << " Filename(.ply) Fitting_plane_filename(.txt) method" << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  std::string filename = argv[1];
+  std::string plane_filename = argv[2];
+  int method = atoi(argv[3]);
+
+  //----------------------------------------------------------------------//
+  // read the *.ply data 
+  // ---------------------------------------------------------------------//
+  std::vector< std::vector<double> > mylandmarks = ReadPointcloudFromPLYFile(filename);
+
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkCellArray> vertices = vtkSmartPointer<vtkCellArray>::New();
 
@@ -104,7 +161,8 @@ int main ( int argc, char *argv[] )
   {
 	  double p[3];
       std::cout << "i = " << i << ": ";
-	  for(int j=0; j<mylandmarks[i].size(); j++)
+	  
+	  for(int j=0; j<3; j++)
 	  {
 		  p[j] = mylandmarks[i][j];
 	      std::cout << " " << mylandmarks[i][j];
@@ -116,6 +174,7 @@ int main ( int argc, char *argv[] )
 	  vertices->InsertNextCell(1,pid);
   }
 
+  std::cout<< " check here 2. " << std::endl;
   vtkSmartPointer<vtkPolyData> point = vtkSmartPointer<vtkPolyData>::New();
   point->SetPoints(points);
   point->SetVerts(vertices);
@@ -125,43 +184,7 @@ int main ( int argc, char *argv[] )
   //-------------------------------------------------------------//
   // Read the parameter for the fitting plane.
   //-------------------------------------------------------------//
-  std::vector< std::vector<double> > myplanes;
-  std::ifstream plane_ifs(plane_filename.c_str(), std::ifstream::in);
-  if(plane_ifs.is_open())
-  {
-      int lno = 0;
-	  int vno;
-	  while(plane_ifs.good())
-	  {
-		  lno++;
-		  std::getline(plane_ifs, line);
-		  
-		  if(lno == 2 || lno == 5 || lno == 8)
-		  {
-              //std::cout << lno << ": " << line << std::endl;
-			  std::stringstream ss(line);
-			  std::string token;
-			  std::vector<std::string> valstrs;
-			  while(std::getline(ss, token, ' '))
-			  {
-				  valstrs.push_back(token);
-				  //std::cout << token << std::endl;
-			  }
-
-			  std::vector<double> params;
-			  for(int i=0; i<4; i++)
-			  {
-				  params.push_back(stod(valstrs[i]));
-			  }
-
-			  myplanes.push_back(params);
-		  }
-	  }
-  }
-
-  plane_ifs.close();
-
-
+  std::vector< std::vector<double> > myplanes = ReadFitParamFile(plane_filename);
   double planeParams[4];
   for(int i=0; i<myplanes.size(); i++)
   {

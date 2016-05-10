@@ -46,6 +46,49 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkOutlineFilter.h>
 
+std::vector<std::vector<double> > ReadFitParamFile(std::string filename)
+{
+  std::vector< std::vector<double> > myparams;
+  std::ifstream ifs(filename.c_str(), std::ifstream::in);
+  std::string strline;
+  if(ifs.is_open())
+  {
+      int lno = 0;
+	  int vno;
+	  while(ifs.good())
+	  {
+		  lno++;
+		  std::getline(ifs, strline);
+		  
+		  if(lno == 2 || lno == 5 || lno == 8)
+		  {
+              //std::cout << lno << ": " << line << std::endl;
+			  std::stringstream ss(strline);
+			  std::string token;
+			  std::vector<std::string> valstrs;
+			  while(std::getline(ss, token, ' '))
+			  {
+				  valstrs.push_back(token);
+				  //std::cout << token << std::endl;
+			  }
+
+			  std::vector<double> params;
+			  for(int i=0; i<valstrs.size(); i++)
+			  {
+				  params.push_back(stod(valstrs[i]));
+			  }
+
+			  myparams.push_back(params);
+		  }
+	  }
+  }
+
+  ifs.close();
+
+  return myparams;
+
+}
+
 int main(int argc, char *argv[])
 {
   // Parse command line arguments
@@ -64,44 +107,7 @@ int main(int argc, char *argv[])
   //-------------------------------------------------------------//
   // Read the parameter for the fitting plane.
   //-------------------------------------------------------------//
-  std::vector< std::vector<double> > myplanes;
-  std::ifstream plane_ifs(plane_filename.c_str(), std::ifstream::in);
-  std::string strline;
-  if(plane_ifs.is_open())
-  {
-      int lno = 0;
-	  int vno;
-	  while(plane_ifs.good())
-	  {
-		  lno++;
-		  std::getline(plane_ifs, strline);
-		  
-		  if(lno == 2 || lno == 5 || lno == 8)
-		  {
-              //std::cout << lno << ": " << line << std::endl;
-			  std::stringstream ss(strline);
-			  std::string token;
-			  std::vector<std::string> valstrs;
-			  while(std::getline(ss, token, ' '))
-			  {
-				  valstrs.push_back(token);
-				  //std::cout << token << std::endl;
-			  }
-
-			  std::vector<double> params;
-			  for(int i=0; i<4; i++)
-			  {
-				  params.push_back(stod(valstrs[i]));
-			  }
-
-			  myplanes.push_back(params);
-		  }
-	  }
-  }
-
-  plane_ifs.close();
-
-
+  std::vector< std::vector<double> > myplanes = ReadFitParamFile(plane_filename);
   double planeNormal[3];
   for(int i=0; i<myplanes.size(); i++)
   {
@@ -121,47 +127,11 @@ int main(int argc, char *argv[])
   //-------------------------------------------------------------//
   // Read the parameter for the fitting line.
   //-------------------------------------------------------------//
-  std::vector< std::vector<double> > mylines;
-  std::ifstream line_ifs(line_filename.c_str(), std::ifstream::in);
-  if(line_ifs.is_open())
-  {
-      int lno = 0;
-	  int vno;
-	  while(line_ifs.good())
-	  {
-		  lno++;
-		  std::getline(line_ifs, strline);
-		  
-		  if(lno == 2 || lno == 5 || lno == 8)
-		  {
-              //std::cout << lno << ": " << strline << std::endl;
-			  std::stringstream ss(strline);
-			  std::string token;
-			  std::vector<std::string> valstrs;
-			  while(std::getline(ss, token, ' '))
-			  {
-				  valstrs.push_back(token);
-				  //std::cout << token << std::endl;
-			  }
-
-			  std::vector<double> params;
-			  for(int i=0; i<3; i++)
-			  {
-				  params.push_back(stod(valstrs[i]));
-			  }
-
-			  mylines.push_back(params);
-		  }
-	  }
-  }
-
-  line_ifs.close();
-
-
+  std::vector< std::vector<double> > mylines = ReadFitParamFile(line_filename);
   double lineParams[3];
   for(int i=0; i<myplanes.size(); i++)
   {
-      std::cout << "Plane normal = " << i << ": ";
+      std::cout << "Line parameter = " << i << ": ";
 	  for(int j=0; j<myplanes[i].size(); j++)
 	  {
 	      std::cout << " " << mylines[i][j];
