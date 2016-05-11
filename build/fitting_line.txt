@@ -1,0 +1,8 @@
+Estimated by least-squares: 
+-0.0564941 0.158968 0.055135
+
+Estimated by least median of squares: 
+-0.0564942 0.158968 0.055135
+
+Estimated by RANSAC: 
+-0.0564942 0.158968 0.0551349
