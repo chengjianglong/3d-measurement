@@ -16,7 +16,7 @@
  *-------------------------------------------------------------------------*/
 
 -----------------------
-How to build
+How to build?
 -----------------------
 Once the "measurement" directory  has been "git clone",
 	 cd measurement/build 
@@ -78,9 +78,9 @@ e.g.: ./Measure footcut.vtp fitting_plane.txt  fitting_line.txt 2
 
 
 
----------------------------
+---------------------
 Remarks
----------------------------
+---------------------
 (a) fitting_plane.txt is obtained by running MAPTK tool
 maptk_fit_plane -c maptk_fit_plane.conf 
 
