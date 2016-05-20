@@ -104,29 +104,6 @@ std::vector<std::vector<double> > ReadFitParamFile(std::string filename)
 
 }
 
-void WritePolyData(vtkPolyData* const polyData, const std::string& filename)
-{
-    vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-#if VTK_MAJOR_VERSION <= 5
-    writer->SetInput(polyData);
-#else
-    writer->SetInputData(polyData);
-#endif
-    writer->SetFileName(filename.c_str());
-    writer->Write();
-}
- 
-void WriteDataSet(vtkDataSet* const dataSet, const std::string& filename)
-{
-    vtkSmartPointer<vtkDataSetWriter> writer = vtkSmartPointer<vtkDataSetWriter>::New();
-#if VTK_MAJOR_VERSION <= 5
-    writer->SetInput(dataSet);
-#else
-    writer->SetInputData(dataSet);
-#endif
-    writer->SetFileName(filename.c_str());
-    writer->Write();
-}
 
 int main ( int argc, char *argv[] )
 {
@@ -209,16 +186,8 @@ int main ( int argc, char *argv[] )
 
   // Create a plane
   vtkSmartPointer<vtkPlaneSource> planeSource = vtkSmartPointer<vtkPlaneSource>::New();
-  planeSource->SetCenter(center[0], center[1], center[2]);
-  // RANSIC
+  planeSource->SetCenter(center[0] + planeParams[0]*dist, center[1] + planeParams[1]*dist, center[2] + planeParams[2]*dist);
   planeSource->SetNormal(planeParams[0], planeParams[1], planeParams[2]);
-  
-  // LMS
-  //planeSource->SetNormal(0.183286, 0.0549184, -0.981524);
-  
-  // Regression
-  //planeSource->SetNormal(-0.688477, 0.318007, 0.651822);
-  
   
   //planeSource->SetOutputPointsPrecision(6);
   planeSource->Update();
@@ -234,14 +203,6 @@ int main ( int argc, char *argv[] )
   clipper->SetInputData(bridgeDataSet);
   clipper->Update();
 
-// Get the clipped cell ids
-//  vtkUnstructuredGrid* clipped = clipper->GetOutput();
-//  vtkIdTypeArray* originalIds = vtkIdTypeArray::SafeDownCast(clipped->GetCellData()->GetArray("vtkIdFilter_Ids"));
-   
-//    {
-//    std::cout << "new id " << i << ", original id " << originalIds->GetValue(i) << std::endl;
-//    }
-  
   
   
   //-----------------------------------------------------------------//
@@ -253,19 +214,6 @@ int main ( int argc, char *argv[] )
   geometryFilter->SetInputData(clipper->GetOutput());
   geometryFilter->Update(); 
 
-  /*
-  vtkXMLPolyDataWriter *writer=vtkXMLPolyDataWriter::New();
-  writer->SetInputConnection(geometryFilter->GetOutputPort());
-  //writer->SetFileName("clipped.vtu");
-  writer->SetFileName("clipper.vtp");
-  writer->SetDataModeToAscii();
-  writer->Write();
-  writer->Delete();
-  */
-
-  // Write the file
-  WritePolyData(planedata, "planedata.vtp");
-  //WritePolyData(geometryFilter->GetOutput(), "clipper.vtp"); 
 
   //------------------------------------------------------------------//
   // Extract the color information.
@@ -337,6 +285,11 @@ int main ( int argc, char *argv[] )
   output->GetPointData()->SetScalars(colors);
 
 
+
+  //-----------------------------------------------------------------//
+  //  Select the largest commponent
+  //-----------------------------------------------------------------//
+  //
   // Apply vtkConnectivityFilter
   vtkSmartPointer<vtkConnectivityFilter> connectivityFilter = vtkSmartPointer<vtkConnectivityFilter>::New();
   connectivityFilter->SetInputData(output);
@@ -349,31 +302,16 @@ int main ( int argc, char *argv[] )
   vtkSmartPointer<vtkCutter> cutter = vtkSmartPointer<vtkCutter>::New();
   cutter->SetCutFunction(plane);
   cutter->SetInputConnection(connectivityFilter->GetOutputPort());
-  //cutter->GenerateValues(20, -0.816385, 0.816385);
   cutter->GenerateValues(1, 0, 0);
   
   // Create a mapper and actor for clipped points
   vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-  //mapper->SetInputConnection(clipper->GetOutputPort());
-  // mapper->SetInputData(output);
   mapper->SetInputConnection(connectivityFilter->GetOutputPort());
 
-  vtkSmartPointer<vtkGeometryFilter> clippergeometryFilter = vtkSmartPointer<vtkGeometryFilter>::New();
-  clippergeometryFilter->SetInputData(connectivityFilter->GetOutput());
-  clippergeometryFilter->Update(); 
 
-  vtkXMLPolyDataWriter *writer=vtkXMLPolyDataWriter::New();
-  writer->SetInputConnection(clippergeometryFilter->GetOutputPort());
-  //writer->SetFileName("clipped.vtu");
-  writer->SetFileName("clipper.vtp");
-  writer->SetDataModeToAscii();
-  writer->Write();
-  writer->Delete();
-  
-  //-----------------------------------------------------------------//
-  //  Save the largest commponent
-  //-----------------------------------------------------------------//
-  //
+  //--------------------------------------------------//
+  // For the visualization of the cutted contour.
+  //--------------------------------------------------//
   
   vtkSmartPointer<vtkStripper> stripper = vtkSmartPointer<vtkStripper>::New();
   stripper->SetInputConnection(cutter->GetOutputPort());
@@ -388,14 +326,17 @@ int main ( int argc, char *argv[] )
   sf->SetSpline(spline);
   sf->GetSpline()->ClosedOn();
 
+
+  //---------------------------------------------------------//
+  // Save the cutted countour as footcut.vtp and footcut.ply.
+  //---------------------------------------------------------//
+
   vtkSmartPointer<vtkGeometryFilter> cutgeometryFilter = vtkSmartPointer<vtkGeometryFilter>::New();
   cutgeometryFilter->SetInputConnection(cutter->GetOutputPort());
-  //cutgeometryFilter->SetInputConnection(sf->GetOutputPort());
   cutgeometryFilter->Update(); 
 
   vtkXMLPolyDataWriter *cutwriter=vtkXMLPolyDataWriter::New();
   cutwriter->SetInputConnection(cutgeometryFilter->GetOutputPort());
-  //writer->SetFileName("clipped.vtu");
   cutwriter->SetFileName("footcut.vtp");
   cutwriter->SetDataModeToAscii();
   cutwriter->Write();
@@ -421,7 +362,6 @@ int main ( int argc, char *argv[] )
 
   vtkXMLPolyDataWriter *segwriter=vtkXMLPolyDataWriter::New();
   segwriter->SetInputConnection(geometryFilter->GetOutputPort());
-  //writer->SetFileName("clipped.vtu");
   segwriter->SetFileName("footseg.vtp");
   segwriter->SetDataModeToAscii();
   segwriter->Write();
@@ -433,11 +373,10 @@ int main ( int argc, char *argv[] )
   //
   vtkSmartPointer<vtkActor> actor =  vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
-  //actor->GetProperty()->SetPointSize(2);
 
   // Create a mapper
   vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  planeMapper->SetInputData(planedata);
+  planeMapper->SetInputData(planeSource->GetOutput());
 
   // Create an actor for the plane
   vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor>::New();

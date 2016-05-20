@@ -165,17 +165,6 @@ int main ( int argc, char *argv[] )
 
 
   //---------------------------------------------------//
-  // Create a plane source.
-  //---------------------------------------------------//
-  
-  vtkSmartPointer<vtkPlaneSource> planeSource = vtkSmartPointer<vtkPlaneSource>::New();
-  planeSource->SetCenter(center[0], center[1], center[2]);
-  planeSource->SetNormal(planeNormal[0], planeNormal[1], planeNormal[2]);
-  planeSource->SetXResolution(20);
-  planeSource->SetYResolution(20);
-  planeSource->Update();
-  
-  //---------------------------------------------------//
   // Clip the polydata.
   //---------------------------------------------------//
   
@@ -189,7 +178,21 @@ int main ( int argc, char *argv[] )
   center[1] += dist*planeNormal[1];
   center[2] += dist*planeNormal[2];
   
+  //---------------------------------------------------//
+  // Create a plane source.
+  //---------------------------------------------------//
+  
+  vtkSmartPointer<vtkPlaneSource> planeSource = vtkSmartPointer<vtkPlaneSource>::New();
+  planeSource->SetCenter(center[0], center[1], center[2]);
+  planeSource->SetNormal(planeNormal[0], planeNormal[1], planeNormal[2]);
+  planeSource->SetXResolution(20);
+  planeSource->SetYResolution(20);
+  planeSource->Update();
+ 
+  //---------------------------------------------------//
   // Create a plane to clip with
+  //---------------------------------------------------//
+  //
   vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
   plane->SetOrigin(center[0], center[1], center[2]);
   plane->SetNormal(planeNormal[0], planeNormal[1], planeNormal[2]);

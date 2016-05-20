@@ -419,12 +419,11 @@ int main(int argc, char *argv[])
   //-------------------------------------------------------//
 
   // Setup the text and add it to the renderer
-  vtkSmartPointer<vtkTextActor> textActor = vtkSmartPointer<vtkTextActor>::New();
-  textActor->SetInput ( "Hello world" );
-  textActor->SetPosition2 (400, 400 );
-  textActor->GetTextProperty()->SetFontSize ( 24 );
-  textActor->GetTextProperty()->SetColor ( 1.0, 0.0, 0.0 );
-
+//  vtkSmartPointer<vtkTextActor> textActor = vtkSmartPointer<vtkTextActor>::New();
+//  textActor->SetInput ( "Hello world" );
+//  textActor->SetPosition2 (400, 400 );
+//  textActor->GetTextProperty()->SetFontSize ( 24 );
+//  textActor->GetTextProperty()->SetColor ( 1.0, 0.0, 0.0 );
   
 
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -464,7 +463,7 @@ int main(int argc, char *argv[])
   renderer->AddActor(actor);
   //renderer->AddActor(lineactor);
   renderer->AddActor(outlineActor);
-  renderer->AddActor2D ( textActor );
+  //renderer->AddActor2D ( textActor );
   renderer->SetBackground(0.3, 0.6, 0.3); // Background color white
 
   // Render and interact

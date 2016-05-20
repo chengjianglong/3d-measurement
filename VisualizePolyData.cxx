@@ -67,7 +67,7 @@ int main ( int argc, char *argv[] )
   vtkPointData *pd = output->GetPointData();
   if (pd)
   {
-      std::cout << " contains point data with "
+      std::cout << " Contains point data with "
                 << pd->GetNumberOfArrays()
                 << " arrays." << std::endl;
 

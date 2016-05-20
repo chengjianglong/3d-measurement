@@ -109,7 +109,7 @@ int main ( int argc, char *argv[] )
   double normal[3];
   for(int i=0; i<myplanes.size(); i++)
   {
-      std::cout << "Fitting plane  = " << i << ": ";
+      std::cout << "Fitting plane normal " << i << ": ";
 	  for(int j=0; j<myplanes[i].size(); j++)
 	  {
 	      std::cout << " " << myplanes[i][j];
